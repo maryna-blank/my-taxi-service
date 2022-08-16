@@ -8,6 +8,8 @@ import java.sql.Statement;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import org.apache.logging.log4j.LogManager;
+import org.apache.logging.log4j.Logger;
 import taxi.exception.DataProcessingException;
 import taxi.lib.Dao;
 import taxi.model.Manufacturer;
@@ -15,6 +17,8 @@ import taxi.util.ConnectionUtil;
 
 @Dao
 public class ManufacturerDaoImpl implements ManufacturerDao {
+    private static final Logger LOGGER = LogManager.getLogger(ManufacturerDaoImpl.class);
+
     @Override
     public Manufacturer create(Manufacturer manufacturer) {
         String query = "INSERT INTO manufacturers (name, country) VALUES (?,?)";
@@ -26,8 +30,10 @@ public class ManufacturerDaoImpl implements ManufacturerDao {
             if (resultSet.next()) {
                 manufacturer.setId(resultSet.getObject(1, Long.class));
             }
+            LOGGER.info("A manufacturer was created. Params: {}", manufacturer);
             return manufacturer;
         } catch (SQLException e) {
+            LOGGER.error("Couldn't create a manufacturer. Params: {}", manufacturer);
             throw new DataProcessingException("Couldn't create manufacturer. " + manufacturer, e);
         }
     }
@@ -43,8 +49,10 @@ public class ManufacturerDaoImpl implements ManufacturerDao {
             if (resultSet.next()) {
                 manufacturer = parseManufacturerFromResultSet(resultSet);
             }
+            LOGGER.info("Got a manufacturer. Params: id={}", id);
             return Optional.ofNullable(manufacturer);
         } catch (SQLException e) {
+            LOGGER.error("Couldn't get a manufacturer. Params: id={}", id);
             throw new DataProcessingException("Couldn't get manufacturer by id " + id, e);
         }
     }
@@ -60,8 +68,10 @@ public class ManufacturerDaoImpl implements ManufacturerDao {
             while (resultSet.next()) {
                 manufacturers.add(parseManufacturerFromResultSet(resultSet));
             }
+            LOGGER.info("Got all manufacturers");
             return manufacturers;
         } catch (SQLException e) {
+            LOGGER.error("Couldn't get all manufacturers from a DB");
             throw new DataProcessingException("Couldn't get a list of manufacturers "
                     + "from manufacturers table. ", e);
         }
@@ -76,8 +86,10 @@ public class ManufacturerDaoImpl implements ManufacturerDao {
                         = setUpdate(connection.prepareStatement(query), manufacturer)) {
             updateManufacturerStatement.setLong(3, manufacturer.getId());
             updateManufacturerStatement.executeUpdate();
+            LOGGER.info("A manufacturer was updated. Params: {}", manufacturer);
             return manufacturer;
         } catch (SQLException e) {
+            LOGGER.error("Couldn't update a manufacturer. Params: {}", manufacturer);
             throw new DataProcessingException("Couldn't update a manufacturer "
                     + manufacturer, e);
         }
@@ -90,8 +102,10 @@ public class ManufacturerDaoImpl implements ManufacturerDao {
                 PreparedStatement deleteManufacturerStatement
                         = connection.prepareStatement(query)) {
             deleteManufacturerStatement.setLong(1, id);
+            LOGGER.info("A manufacturer was deleted. Params: id={}", id);
             return deleteManufacturerStatement.executeUpdate() > 0;
         } catch (SQLException e) {
+            LOGGER.error("Couldn't delete a manufacturer. Params: id={}", id);
             throw new DataProcessingException("Couldn't delete a manufacturer by id " + id, e);
         }
     }
